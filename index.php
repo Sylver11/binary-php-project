@@ -1,8 +1,15 @@
+<?php
+session_start()
+?>
+
 <html>
  <head>
-  <title>PHP Test</title>
+  <title>Binary PHP project</title>
  </head>
  <body>
- <?php echo '<p>Hfasdfasfsello Worldhh</p>'; ?> 
+   "Welcome to the my PHP project"
+<?php 
+require_once 'conn.php';
+?> 
  </body>
 </html>
