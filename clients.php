@@ -11,8 +11,10 @@ require_once 'conn.php';
 $client_name = $client_id = "";
 $client_name_err = $client_id_err = "";
 
-if($_SERVER["REQUEST_METHOD"] == "POST"){
- 
+// if($_SERVER["REQUEST_METHOD"] == "POST"){
+  // if (isset($_POST['add_client'])) {
+    if (!empty($_POST['client_name'])){
+
   if(empty(trim($_POST["client_name"]))){
     $client_name_err = "Please enter a name";
    } else{
@@ -63,7 +65,7 @@ mysqli_close($link);
     <div class="wrapper">
         <h2>Add Contact</h2>
         <p>Please fill this form to add a contact.</p>
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+        <form class="form_add_client" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
             <div class="form-group <?php echo (!empty($client_name_err)) ? 'has-error' : ''; ?>">
                 <label>Name</label>
                 <input id="client_name"type="text" name="client_name" class="form-control" value="<?php echo $client_name; ?>">
@@ -75,13 +77,13 @@ mysqli_close($link);
                 <span class="help-block"><?php echo $client_id_err; ?></span>
             </div>  
             <div class="form-group">
-                <input type="submit" class="btn btn-primary" value="Add client">
+                <input type="submit" name="add_client" class="btn btn-primary" value="Add client">
                 <input type="reset" class="btn btn-default" value="Reset">
             </div>  
         </form>
     </div>
 
-  <h4>List of all contacts:</h4>
+  <h4>List of all clients:</h4>
   <ul>
   <?php
     $sql = "SELECT * FROM clients ORDER BY client_name ASC";
@@ -93,6 +95,26 @@ mysqli_close($link);
     $i++;  
     } }?>
     </ul>
+
+
+
+    <h4>List of all contacts:</h4>
+  <ul>
+  <?php
+    $sql = "SELECT * FROM users ORDER BY user_surname ASC";
+    $i=0;
+    if ($result=mysqli_query($conn,$sql)){
+      while ($row = mysqli_fetch_array($result)){
+        echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
+        if($row['user_clients_associated'] == '') { echo " No clients linked </li>"; };
+        echo " <form class='search_form' autocomplete='off'>";
+        echo "<input type='text' class= 'search'>";
+        echo "<button type='submit'>Search</button>";
+        echo "</form>";
+    $i++;  
+    } }   
+?>
+</ul>
 
 
 </body>
@@ -147,7 +169,7 @@ var final_id = ''
     final_id = id_str.slice(0, 3).join("")
 });
 
-  $('form').submit(function(e) { 
+  $('.form_add_client').submit(function(e) { 
     e.preventDefault();
     e.returnValue = false;
         $.ajax({ 
@@ -160,11 +182,108 @@ var final_id = ''
               $("#client_id").val(final_id + highest_id_string_final )
             },
             complete: function() { 
-              $("form").off('submit');
-              $('form').submit();
+              $(".form_add_client").off('submit');
+              $('.form_add_client').submit();
             }
        });
   });
+
+
+
+  $('.search_form').on("submit", function(e) {
+        e.preventDefault()
+        // console.log(e)
+        // console.log($(e).find('.search'))
+        console.log(e)
+        var data = $(".search :input").serializeArray();
+        // console.log(data)
+        // var name = data[0]['value']
+        // console.log(name)
+        //  window.location.href = "/patient/" + name
+        });
+
+
+  $(document).on("keyup", ".search", function (e) {
+            e.preventDefault();
+            var currentFocus;
+            var input_element = this;
+            var url = "live_search.php";
+            var a, b, i, val = this.value;
+            var name = this.value
+                $.ajax({
+                type: "GET",
+                url: url,
+                data: {contact_name: name}, 
+                dataType: 'json',
+                success: function (returnData) {
+                  // console.log(returnData.length)
+                    if (returnData.length <= 5){
+                      var names = [], range = returnData.length;
+                    }
+                    else{
+                     var names = [], range = 5
+                    }
+                    for (i = 0; i < range; i++) {
+                        names[i] = returnData[i]
+                    }
+                    closeAllLists();
+                    if (!val) { return false;}
+                    currentFocus = -1;
+                    var a = document.createElement("DIV");
+                    a.setAttribute("id", "autocomplete-list");
+                    a.setAttribute("class", "autocomplete-items");
+                    input_element.parentNode.appendChild(a);
+                    for (i = 0; i < names.length; i++) {
+                        if (names[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+                            var b = document.createElement("DIV");
+                            b.innerHTML = "<strong>" + names[i].substr(0, val.length) + "</strong>";
+                            b.innerHTML += names[i].substr(val.length);
+                            b.innerHTML += "<input type='hidden' value='" + names[i] + "'>";
+                            b.addEventListener("click", function(e) {
+                                // input_element.value = this.getElementsByTagName("input")[0].value;
+                                // input_element.value = "helllo"
+                                input_element.value = this.getElementsByTagName("input")[0].value
+                                closeAllLists();
+                            });
+                            a.appendChild(b);
+                        }
+                    }
+
+
+            function closeAllLists(elmnt) {
+                var x = document.getElementsByClassName("autocomplete-items");
+                for (var i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != input_element) {
+                    x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+
+                }
+            });
+        });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 });
 </script>
