@@ -19,16 +19,11 @@ if (!empty($_POST['client_name'])){
       $client_name = trim($_POST["client_name"]);
     }
 
-
   if(empty(trim($_POST["client_id"]))){
       $client_id_err = "Please enter an ID.";
     } else{
         $client_id = trim($_POST["client_id"]);
       }
-
-
-
-
 
   if(empty($client_id_err) && empty($client_name_err)){
         
@@ -56,10 +51,12 @@ mysqli_close($link);
 
 ?> 
 
-
-
-
 <body>
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/contacts.php">Contacts</a></li>
+      <li><a href="/clients.php">Clients</a></li>
+    </ul>
     <div class="wrapper">
         <h2>Add Contact</h2>
         <p>Please fill this form to add a contact.</p>
@@ -87,16 +84,23 @@ mysqli_close($link);
     $sql = "SELECT * FROM clients ORDER BY client_name ASC";
     $i=0;
     if ($result=mysqli_query($conn,$sql)){
-      while ($row = mysqli_fetch_array($result)){
-        echo "<li> " . $row['client_name'] ." " . $row['client_id'];
-        if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
-        else{echo "<ul><li> " . $row['client_contacts_associated'] . "</li></ul></li>"; }
-        echo " <form class='search_form' autocomplete='off'>";
-        echo "<input type='text' class= 'search'>";
-        echo "<button type='submit'>Link</button>";
-        echo "</form>";
-    $i++;  
-    } }?>
+      if(mysqli_num_rows($result)!==0) {
+        while ($row = mysqli_fetch_array($result)){
+          echo "<li> " . $row['client_name'] ." " . $row['client_id'];
+          if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
+          else{$array = explode(', ', $row['client_contacts_associated']);
+            foreach($array as $value) {echo "<ul><li> " . $value . "</li><button type='delete' onclick='location.href=\"unlink.php?client_id=" . $row['client_id'] . "&user_email=" . $value . "\";'>Remove link</button></ul>"; }}
+    
+          echo " </li><form class='search_form' autocomplete='off'>";
+          echo "<input type='text' class= 'search'>";
+          echo "<button type='submit'>Link</button>";
+          echo "</form>";
+        }
+    $i++;
+      }else{
+        echo "No client(s) found.";
+      }   
+    } ?>
     </ul>
 
 
@@ -107,16 +111,16 @@ mysqli_close($link);
     $sql = "SELECT * FROM users ORDER BY user_surname ASC";
     $i=0;
     if ($result=mysqli_query($conn,$sql)){
-      while ($row = mysqli_fetch_array($result)){
-        echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
-        if($row['user_clients_associated'] == '') { echo "<ul><li> No clients linked </li></ul></li>"; }
-        else{echo "<ul><li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
-        // echo " <form class='search_form' autocomplete='off'>";
-        // echo "<input type='text' class= 'search'>";
-        // echo "<button type='submit'>Link</button>";
-        // echo "</form>";
-    $i++;  
-    } }   
+      if(mysqli_num_rows($result)!==0) {
+        while ($row = mysqli_fetch_array($result)){
+          echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
+          if($row['user_clients_associated'] == '') { echo "<ul><li> No clients linked </li></ul></li>"; }
+          else{echo "<ul><li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
+      $i++;  
+    } }else{
+      echo "No contact(s) found.";
+    }    
+  }
 ?>
 </ul>
 
@@ -179,10 +183,16 @@ var final_id = ''
         $.ajax({ 
             type: 'post',
             url: "client_id.php", 
-            success: function(data) { 
-              var obj = JSON.parse(data);
-              var highest_id = parseInt(obj) + 1;
-              var highest_id_string_final = ("00" + highest_id).slice(-3);
+            success: function(data) {
+              console.log(data)
+             if(data !== 'null'){
+                var obj = JSON.parse(data);
+                var highest_id = parseInt(obj) + 1;
+                var highest_id_string_final = ("00" + highest_id).slice(-3);
+              }
+              else{
+                var highest_id_string_final = '001'
+              }
               $("#client_id").val(final_id + highest_id_string_final )
             },
             complete: function() { 
@@ -196,27 +206,19 @@ var final_id = ''
 
   $('.search_form').on("submit", function(e) {
         e.preventDefault()
-        var contact_string = $(this).prev('li').text()
-        console.log(contact_string)
-        var re = /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/;
-        var contact_email = re.exec(contact_string);
-        var client_name = this[0].value
-        console.log(contact_email[0])
+        var client_string = $(this).prev('li').text()
+        var re = /\b[a-zA-Z]{3}\d{3}\b/
+        var client_id = re.exec(client_string);
+        var user_email = this[0].value
+        var object = this
         $.ajax({ 
             type: 'get',
             url: "make_connection.php", 
-            data: {client_name: client_name, contact_email: contact_email[0]}, 
+            data: {client_id: client_id[0], user_email: user_email}, 
             dataType: 'json',
-            success: function(data) { 
-              var obj = JSON.parse(data);
-              console.log(obj)
-              // var highest_id = parseInt(obj) + 1;
-              // var highest_id_string_final = ("00" + highest_id).slice(-3);
-              // $("#client_id").val(final_id + highest_id_string_final )
-            },
-            complete: function() { 
-              // $(".form_add_client").off('submit');
-              // $('.form_add_client').submit();
+            success: function() { 
+              $(object).find('input').val('');
+
             }
        });
 
@@ -233,7 +235,7 @@ var final_id = ''
                 $.ajax({
                 type: "GET",
                 url: url,
-                data: {contact_name: name}, 
+                data: {user_email: name}, 
                 dataType: 'json',
                 success: function (returnData) {
                     if (returnData.length <= 5){
