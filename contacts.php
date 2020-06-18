@@ -125,7 +125,7 @@ mysqli_close($link);
   <ul>
   <?php
     $sql = "SELECT * FROM users ORDER BY user_surname ASC";
-    $i=0; // this refer every row..now its 0
+    $i=0;
     if ($result=mysqli_query($conn,$sql)){
       while ($row = mysqli_fetch_array($result)){
         echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];

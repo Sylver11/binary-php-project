@@ -11,9 +11,7 @@ require_once 'conn.php';
 $client_name = $client_id = "";
 $client_name_err = $client_id_err = "";
 
-// if($_SERVER["REQUEST_METHOD"] == "POST"){
-  // if (isset($_POST['add_client'])) {
-    if (!empty($_POST['client_name'])){
+if (!empty($_POST['client_name'])){
 
   if(empty(trim($_POST["client_name"]))){
     $client_name_err = "Please enter a name";
@@ -91,7 +89,8 @@ mysqli_close($link);
     if ($result=mysqli_query($conn,$sql)){
       while ($row = mysqli_fetch_array($result)){
         echo "<li> " . $row['client_name'] ." " . $row['client_id'];
-        if($row['client_contacts_associated'] == '') { echo " No contacts linked </li>"; };
+        if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
+        else{echo "<ul><li> " . $row['client_contacts_associated'] . "</li></ul></li>"; }
     $i++;  
     } }?>
     </ul>
@@ -106,10 +105,11 @@ mysqli_close($link);
     if ($result=mysqli_query($conn,$sql)){
       while ($row = mysqli_fetch_array($result)){
         echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
-        if($row['user_clients_associated'] == '') { echo " No clients linked </li>"; };
+        if($row['user_clients_associated'] == '') { echo "<ul><li> No clients linked </li></ul></li>"; }
+        else{echo "<ul><li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
         echo " <form class='search_form' autocomplete='off'>";
         echo "<input type='text' class= 'search'>";
-        echo "<button type='submit'>Search</button>";
+        echo "<button type='submit'>Link</button>";
         echo "</form>";
     $i++;  
     } }   
@@ -192,14 +192,30 @@ var final_id = ''
 
   $('.search_form').on("submit", function(e) {
         e.preventDefault()
-        // console.log(e)
-        // console.log($(e).find('.search'))
-        console.log(e)
-        var data = $(".search :input").serializeArray();
-        // console.log(data)
-        // var name = data[0]['value']
-        // console.log(name)
-        //  window.location.href = "/patient/" + name
+        var contact_string = $(this).prev('li').text()
+        console.log(contact_string)
+        var re = /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/;
+        var contact_email = re.exec(contact_string);
+        var client_name = this[0].value
+        console.log(contact_email[0])
+        $.ajax({ 
+            type: 'get',
+            url: "make_connection.php", 
+            data: {client_name: client_name, contact_email: contact_email[0]}, 
+            dataType: 'json',
+            success: function(data) { 
+              var obj = JSON.parse(data);
+              console.log(obj)
+              // var highest_id = parseInt(obj) + 1;
+              // var highest_id_string_final = ("00" + highest_id).slice(-3);
+              // $("#client_id").val(final_id + highest_id_string_final )
+            },
+            complete: function() { 
+              // $(".form_add_client").off('submit');
+              // $('.form_add_client').submit();
+            }
+       });
+
         });
 
 
@@ -216,7 +232,6 @@ var final_id = ''
                 data: {contact_name: name}, 
                 dataType: 'json',
                 success: function (returnData) {
-                  // console.log(returnData.length)
                     if (returnData.length <= 5){
                       var names = [], range = returnData.length;
                     }
@@ -240,8 +255,6 @@ var final_id = ''
                             b.innerHTML += names[i].substr(val.length);
                             b.innerHTML += "<input type='hidden' value='" + names[i] + "'>";
                             b.addEventListener("click", function(e) {
-                                // input_element.value = this.getElementsByTagName("input")[0].value;
-                                // input_element.value = "helllo"
                                 input_element.value = this.getElementsByTagName("input")[0].value
                                 closeAllLists();
                             });
@@ -265,25 +278,6 @@ var final_id = ''
                 }
             });
         });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 });
 </script>
