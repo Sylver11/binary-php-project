@@ -91,6 +91,10 @@ mysqli_close($link);
         echo "<li> " . $row['client_name'] ." " . $row['client_id'];
         if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
         else{echo "<ul><li> " . $row['client_contacts_associated'] . "</li></ul></li>"; }
+        echo " <form class='search_form' autocomplete='off'>";
+        echo "<input type='text' class= 'search'>";
+        echo "<button type='submit'>Link</button>";
+        echo "</form>";
     $i++;  
     } }?>
     </ul>
@@ -107,10 +111,10 @@ mysqli_close($link);
         echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
         if($row['user_clients_associated'] == '') { echo "<ul><li> No clients linked </li></ul></li>"; }
         else{echo "<ul><li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
-        echo " <form class='search_form' autocomplete='off'>";
-        echo "<input type='text' class= 'search'>";
-        echo "<button type='submit'>Link</button>";
-        echo "</form>";
+        // echo " <form class='search_form' autocomplete='off'>";
+        // echo "<input type='text' class= 'search'>";
+        // echo "<button type='submit'>Link</button>";
+        // echo "</form>";
     $i++;  
     } }   
 ?>

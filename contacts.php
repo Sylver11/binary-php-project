@@ -1,6 +1,7 @@
 <html>
  <head>
   <title>Contacts</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
  </head>
 
 
@@ -59,10 +60,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $user_surname = trim($_POST["user_surname"]);
       }
 
-
-
-
-
   if(empty($user_email_err) && empty($user_name_err) && empty($user_surname_err)){
         
     $sql = "INSERT INTO users (user_name, user_surname, user_email) VALUES (?, ?, ?)";
@@ -77,7 +74,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
       
 
       if(mysqli_stmt_execute($stmt)){
-          header("location: general.php");
+          header("location: contacts.php");
       } else{
           echo "Something went wrong. Please try again later.";
       }
@@ -129,12 +126,140 @@ mysqli_close($link);
     if ($result=mysqli_query($conn,$sql)){
       while ($row = mysqli_fetch_array($result)){
         echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
-        if($row['user_clients_associated'] == '') { echo " No clients linked </li>"; };
+        if($row['user_clients_associated'] == '') { echo "<ul><li> No clients linked </li></ul></li>"; }
+        else{
+          $array = explode(', ', $row['user_clients_associated']);
+          foreach($array as $value) {echo "<ul><li> " . $value . "</li><button type='delete' onclick='location.href=\"unlink.php?user_email=" . $row['user_email'] . "&client_name=" . $value . "\";'>Remove link</button></ul>"; }}
+        echo " </li><form class='search_form' autocomplete='off'>";
+        echo "<input type='text' class= 'search'>";
+        echo "<button type='submit'>Link</button>";
+        echo "</form>";
+    $i++;  
+    } }   
+?>
+</ul>
+
+
+
+
+<h4>List of all clients:</h4>
+  <ul>
+  <?php
+    $sql = "SELECT * FROM clients ORDER BY client_name ASC";
+    $i=0;
+    if ($result=mysqli_query($conn,$sql)){
+      while ($row = mysqli_fetch_array($result)){
+        echo "<li> " . $row['client_name'] ." " . $row['client_id'];
+        if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
+        else{echo "<ul><li> " . $row['client_contacts_associated'] . "</li></ul></li>"; }
     $i++;  
     } }   
 ?>
 </ul>
  </body>
+
+
+
+<script>
+$( document ).ready(function() {
+
+  $('.search_form').on("submit", function(e) {
+        e.preventDefault()
+        var contact_string = $(this).prev('li').text()
+        console.log($(this).prev('li'))
+        var re = /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/;
+        var contact_email = re.exec(contact_string);
+        var client_name = this[0].value
+        console.log(contact_email[0])
+        $.ajax({ 
+            type: 'get',
+            url: "make_connection.php", 
+            data: {client_name: client_name, contact_email: contact_email[0]}, 
+            dataType: 'json',
+            success: function(data) { 
+              var obj = JSON.parse(data);
+              console.log(obj)
+              // var highest_id = parseInt(obj) + 1;
+              // var highest_id_string_final = ("00" + highest_id).slice(-3);
+              // $("#client_id").val(final_id + highest_id_string_final )
+            },
+            complete: function() { 
+              // $(".form_add_client").off('submit');
+              // $('.form_add_client').submit();
+            }
+       });
+
+        });
+
+
+  $(document).on("keyup", ".search", function (e) {
+            e.preventDefault();
+            var currentFocus;
+            var input_element = this;
+            var url = "live_search.php";
+            var a, b, i, val = this.value;
+            var name = this.value
+                $.ajax({
+                type: "GET",
+                url: url,
+                data: {contact_name: name}, 
+                dataType: 'json',
+                success: function (returnData) {
+                    if (returnData.length <= 5){
+                      var names = [], range = returnData.length;
+                    }
+                    else{
+                     var names = [], range = 5
+                    }
+                    for (i = 0; i < range; i++) {
+                        names[i] = returnData[i]
+                    }
+                    closeAllLists();
+                    if (!val) { return false;}
+                    currentFocus = -1;
+                    var a = document.createElement("DIV");
+                    a.setAttribute("id", "autocomplete-list");
+                    a.setAttribute("class", "autocomplete-items");
+                    input_element.parentNode.appendChild(a);
+                    for (i = 0; i < names.length; i++) {
+                        if (names[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+                            var b = document.createElement("DIV");
+                            b.innerHTML = "<strong>" + names[i].substr(0, val.length) + "</strong>";
+                            b.innerHTML += names[i].substr(val.length);
+                            b.innerHTML += "<input type='hidden' value='" + names[i] + "'>";
+                            b.addEventListener("click", function(e) {
+                                input_element.value = this.getElementsByTagName("input")[0].value
+                                closeAllLists();
+                            });
+                            a.appendChild(b);
+                        }
+                    }
+
+
+            function closeAllLists(elmnt) {
+                var x = document.getElementsByClassName("autocomplete-items");
+                for (var i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != input_element) {
+                    x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+
+                }
+
+
+
+
+            });
+        });
+
+});
+
+</script>
+
 
 
 </html>
