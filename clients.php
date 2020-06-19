@@ -1,7 +1,8 @@
 <html>
  <head>
-  <title>Contacts</title>
+  <title>Clients</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
  </head>
 
 
@@ -52,15 +53,29 @@ mysqli_close($link);
 ?> 
 
 <body>
-    <ul>
-      <li><a href="/">Home</a></li>
-      <li><a href="/contacts.php">Contacts</a></li>
-      <li><a href="/clients.php">Clients</a></li>
-    </ul>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li id="nav_home" class="nav-item active">
+          <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li id="nav_contacts" class="nav-item">
+          <a class="nav-link" href="/contacts.php">Contacts</a>
+        </li>
+        <li id="nav_clients" class="nav-item">
+          <a class="nav-link" href="/clients.php">Clients</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <div class="container">
     <div class="wrapper">
-        <h2>Add Contact</h2>
-        <p>Please fill this form to add a contact.</p>
-        <form class="form_add_client" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+        <h2>Add Client</h2>
+        <p>Please fill this form to add a client.</p>
+        <form name="form_add_client" class="form_add_client" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
             <div class="form-group <?php echo (!empty($client_name_err)) ? 'has-error' : ''; ?>">
                 <label>Name</label>
                 <input id="client_name"type="text" name="client_name" class="form-control" value="<?php echo $client_name; ?>">
@@ -77,23 +92,23 @@ mysqli_close($link);
             </div>  
         </form>
     </div>
-
-  <h4>List of all clients:</h4>
-  <ul>
-  <?php
+    <br><br>
+    <h4>List of all clients:</h4>
+    <ul>
+    <?php
     $sql = "SELECT * FROM clients ORDER BY client_name ASC";
     $i=0;
     if ($result=mysqli_query($conn,$sql)){
       if(mysqli_num_rows($result)!==0) {
         while ($row = mysqli_fetch_array($result)){
-          echo "<li> " . $row['client_name'] ." " . $row['client_id'];
-          if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
+          echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
+          if($row['client_contacts_associated'] == '') { echo "<li> No contacts linked </li></ul></li>"; }
           else{$array = explode(', ', $row['client_contacts_associated']);
-            foreach($array as $value) {echo "<ul><li> " . $value . "</li><button type='delete' onclick='location.href=\"unlink.php?client_id=" . $row['client_id'] . "&user_email=" . $value . "\";'>Remove link</button></ul>"; }}
-    
-          echo " </li><form class='search_form' autocomplete='off'>";
+            foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id=" . $row   ['client_id']  . "&user_email=" . $value . "\";'>Remove link</button>"; }
+          echo "</ul>";}
+          echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
           echo "<input type='text' class= 'search'>";
-          echo "<button type='submit'>Link</button>";
+          echo "<button class='btn btn-success' type='submit'>Link</button>";
           echo "</form>";
         }
     $i++;
@@ -102,36 +117,42 @@ mysqli_close($link);
       }   
     } ?>
     </ul>
-
-
-
+    <br><br>
     <h4>List of all contacts:</h4>
-  <ul>
-  <?php
-    $sql = "SELECT * FROM users ORDER BY user_surname ASC";
-    $i=0;
-    if ($result=mysqli_query($conn,$sql)){
-      if(mysqli_num_rows($result)!==0) {
-        while ($row = mysqli_fetch_array($result)){
-          echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
-          if($row['user_clients_associated'] == '') { echo "<ul><li> No clients linked </li></ul></li>"; }
-          else{echo "<ul><li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
-      $i++;  
-    } }else{
-      echo "No contact(s) found.";
-    }    
-  }
-?>
-</ul>
-
-
+    <ul>
+    <?php
+      $sql = "SELECT * FROM users ORDER BY user_surname ASC";
+      $i=0;
+      if ($result=mysqli_query($conn,$sql)){
+        if(mysqli_num_rows($result)!==0) {
+          while ($row = mysqli_fetch_array($result)){
+            echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'] . "<ul>";
+            if($row['user_clients_associated'] == '') { echo "<li> No clients linked </li></ul></li>"; }
+            else{echo "<li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
+        $i++;  
+      } }else{
+        echo "No contact(s) found.";
+      }    
+    }
+    ?>
+    </ul>
+    <br>
+    <br>
+  </div>
 </body>
 
 
 
 <script>
 $( document ).ready(function() {
-var final_id = ''
+    $("#nav_home").removeClass("active");
+    $("#nav_contacts").removeClass("active");
+    $("#nav_clients").addClass("active");
+    $('.link_contact').click(function(){
+      $(this).parents().next('.search_form').css('display', 'block')
+      $(this).css('display', 'none')
+    })
+    var final_id = ''
     $("#client_name").keyup(function () {
         var str = $("#client_name").val().toUpperCase()
         var words = str.split(" ");
@@ -178,13 +199,17 @@ var final_id = ''
 });
 
   $('.form_add_client').submit(function(e) { 
+    var x = document.forms["form_add_client"]["client_name"].value;
+    if (x == "") {
+      alert("Name must be filled out");
+      return false;
+    }
     e.preventDefault();
     e.returnValue = false;
         $.ajax({ 
             type: 'post',
             url: "client_id.php", 
             success: function(data) {
-              console.log(data)
              if(data !== 'null'){
                 var obj = JSON.parse(data);
                 var highest_id = parseInt(obj) + 1;
@@ -267,7 +292,6 @@ var final_id = ''
                             a.appendChild(b);
                         }
                     }
-
 
             function closeAllLists(elmnt) {
                 var x = document.getElementsByClassName("autocomplete-items");

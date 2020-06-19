@@ -2,6 +2,7 @@
  <head>
   <title>Contacts</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
  </head>
 
 
@@ -88,13 +89,25 @@ mysqli_close($link);
 ?> 
 
 <body>
-
-    <ul>
-      <li><a href="/">Home</a></li>
-      <li><a href="/contacts.php">Contacts</a></li>
-      <li><a href="/clients.php">Clients</a></li>
-    </ul>
-
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li id="nav_home" class="nav-item active">
+          <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li id="nav_contacts" class="nav-item">
+          <a class="nav-link" href="/contacts.php">Contacts</a>
+        </li>
+        <li id="nav_clients" class="nav-item">
+          <a class="nav-link" href="/clients.php">Clients</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <div class="container">
     <div class="wrapper">
         <h2>Add Contact</h2>
         <p>Please fill this form to add a contact.</p>
@@ -115,69 +128,69 @@ mysqli_close($link);
                 <span class="help-block"><?php echo $user_email_err; ?></span>
             </div>
             <div class="form-group">
-                <input type="submit" class="btn btn-primary" value="Submit">
+                <input type="submit" class="btn btn-primary" value="Add Contact">
                 <input type="reset" class="btn btn-default" value="Reset">
             </div>  
         </form>
     </div>
-
-
-  <h4>List of all contacts:</h4>
-  <ul>
-  <?php
-    $sql = "SELECT * FROM users ORDER BY user_surname ASC";
-    $i=0;
-    if ($result=mysqli_query($conn,$sql)){
-      if(mysqli_num_rows($result)!==0) {
-      while ($row = mysqli_fetch_array($result)){
-        echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'];
-        if($row['user_clients_associated'] == '') { echo "<ul><li> No clients linked </li></ul></li>"; }
+    <h4>List of all contacts:</h4>
+    <ul>
+    <?php
+      $sql = "SELECT * FROM users ORDER BY user_surname ASC";
+      $i=0;
+      if ($result=mysqli_query($conn,$sql)){
+        if(mysqli_num_rows($result)!==0) {
+        while ($row = mysqli_fetch_array($result)){
+          echo "<br><li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email']  . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
+          if($row['user_clients_associated'] == '') { echo "<li> No clients linked </li></ul></li>"; }
+          else{
+            $array = explode(', ', $row['user_clients_associated']);
+            foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger'  type='delete' onclick='location.href=\"unlink.php?user_email=" . $row['user_email'] . "&client_id=" . $value . "\";'>Remove link</button></ul>"; }}
+            echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
+            echo "<input type='text' class= 'search'>";
+            echo "<button class='btn btn-success' type='submit'>Link</button>";
+            echo "</form>";
+      $i++;  
+      } }
+      else{
+        echo "No contact(s) found.";
+      } 
+    }  
+    ?>
+    </ul>
+    <h4>List of all clients:</h4>
+      <ul>
+      <?php
+        $sql = "SELECT * FROM clients ORDER BY client_name ASC";
+        $i=0;
+        if ($result=mysqli_query($conn,$sql)){
+          if(mysqli_num_rows($result)!==0) {
+          while ($row = mysqli_fetch_array($result)){
+            echo "<li> " . $row['client_name'] ." " . $row['client_id'];
+            if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
+            else{echo "<ul><li> " . $row['client_contacts_associated'] . "</li></ul></li>"; }
+        $i++;  
+        } }
         else{
-          $array = explode(', ', $row['user_clients_associated']);
-          foreach($array as $value) {echo "<ul><li> " . $value . "</li><button type='delete' onclick='location.href=\"unlink.php?user_email=" . $row['user_email'] . "&client_id=" . $value . "\";'>Remove link</button></ul>"; }}
-        echo " </li><form class='search_form' autocomplete='off'>";
-        echo "<input type='text' class= 'search'>";
-        echo "<button type='submit'>Link</button>";
-        echo "</form>";
-    $i++;  
-    } }
-    else{
-      echo "No contact(s) found.";
-    } 
-  } 
-     
-?>
-</ul>
-
-
-
-
-<h4>List of all clients:</h4>
-  <ul>
-  <?php
-    $sql = "SELECT * FROM clients ORDER BY client_name ASC";
-    $i=0;
-    if ($result=mysqli_query($conn,$sql)){
-      if(mysqli_num_rows($result)!==0) {
-      while ($row = mysqli_fetch_array($result)){
-        echo "<li> " . $row['client_name'] ." " . $row['client_id'];
-        if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
-        else{echo "<ul><li> " . $row['client_contacts_associated'] . "</li></ul></li>"; }
-    $i++;  
-    } }
-    else{
-      echo "No client(s) found.";
-    } 
-  }   
-?>
-</ul>
- </body>
+          echo "No client(s) found.";
+        } 
+      }   
+    ?>
+    </ul>
+  </div>
+</body>
 
 
 
 <script>
 $( document ).ready(function() {
-
+  $("#nav_home").removeClass("active");
+  $("#nav_contacts").addClass("active");
+  $("#nav_clients").removeClass("active");
+  $('.link_contact').click(function(){
+      $(this).parents().next('.search_form').css('display', 'block')
+      $(this).css('display', 'none')
+    })
   $('.search_form').on("submit", function(e) {
         e.preventDefault()
         var contact_string = $(this).prev('li').text()
