@@ -2,6 +2,7 @@
  <head>
   <title>Contacts</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
  </head>
 
@@ -19,7 +20,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
   } else{
     $sql = "SELECT id FROM users WHERE user_email = ?";
     
-    if($stmt = mysqli_prepare($link, $sql)){
+    if($stmt = mysqli_prepare($conn, $sql)){
 
         mysqli_stmt_bind_param($stmt, "s", $param_user_email);
 
@@ -65,7 +66,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         
     $sql = "INSERT INTO users (user_name, user_surname, user_email) VALUES (?, ?, ?)";
    
-    if($stmt = mysqli_prepare($link, $sql)){
+    if($stmt = mysqli_prepare($conn, $sql)){
 
       mysqli_stmt_bind_param($stmt, "sss", $param_user_name, $param_user_surname, $param_user_email);
 
@@ -83,7 +84,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
       mysqli_stmt_close($stmt);
     }
   }
-mysqli_close($link);
+// mysqli_close($conn);
 }
 
 ?> 

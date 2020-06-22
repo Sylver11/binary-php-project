@@ -1,12 +1,5 @@
-<html>
- <head>
-  <title>Clients</title>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
- </head>
-
-
 <?php 
+
 require_once 'conn.php';
 
 $client_name = $client_id = "";
@@ -30,7 +23,7 @@ if (!empty($_POST['client_name'])){
         
     $sql = "INSERT INTO clients (client_name, client_id) VALUES (?, ?)";
    
-    if($stmt = mysqli_prepare($link, $sql)){
+    if($stmt = mysqli_prepare($conn, $sql)){
 
       mysqli_stmt_bind_param($stmt, "ss", $param_client_name, $param_client_id);
 
@@ -39,7 +32,7 @@ if (!empty($_POST['client_name'])){
       
 
       if(mysqli_stmt_execute($stmt)){
-          header("location: clients.php");
+          // header("location: clients.php");
       } else{
           echo "Something went wrong. Please try again later.";
       }
@@ -47,11 +40,17 @@ if (!empty($_POST['client_name'])){
       mysqli_stmt_close($stmt);
     }
   }
-mysqli_close($link);
+// mysqli_close($conn);
 }
 
 ?> 
-
+<html>
+ <head>
+  <title>Clients</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+ </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,12 +77,12 @@ mysqli_close($link);
         <form name="form_add_client" class="form_add_client" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
             <div class="form-group <?php echo (!empty($client_name_err)) ? 'has-error' : ''; ?>">
                 <label>Name</label>
-                <input id="client_name"type="text" name="client_name" class="form-control" value="<?php echo $client_name; ?>">
+                <input id="client_name"type="text" name="client_name" class="form-control">
                 <span class="help-block"><?php echo $client_name_err; ?></span>
             </div>    
             <div class="form-group <?php echo (!empty($client_id_err)) ? 'has-error' : ''; ?>">
                 <label>Client ID</label>
-                <input readonly id="client_id" type="text" name="client_id" class="form-control" value="<?php echo $client_id; ?>">
+                <input readonly id="client_id" type="text" name="client_id" class="form-control">
                 <span class="help-block"><?php echo $client_id_err; ?></span>
             </div>  
             <div class="form-group">
@@ -223,6 +222,8 @@ $( document ).ready(function() {
             complete: function() { 
               $(".form_add_client").off('submit');
               $('.form_add_client').submit();
+              $('.form_add_client').reset();
+              return false;
             }
        });
   });
