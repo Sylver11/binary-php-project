@@ -5,12 +5,13 @@ $data = $_GET['user_email'] ;
 $data_decoded = json_decode($data);
 $param_contact_name = $data . '%';
 $stmt = $conn->prepare("SELECT DISTINCT user_email FROM users WHERE user_email LIKE ?");
-$stmt->bind_param('s', $param_contact_name);
-$stmt->execute();
-$result = $stmt->get_result();
+// $stmt->bind_param('s', $param_contact_name);
+$stmt->execute($param_contact_name);
+$result = $stmt->fetch();
+// print_r($result);
 $tempNum=0;
 $arr = array();
-while ($row = $result->fetch_assoc()) {
+while ($row = $result) {
         $arr[$tempNum]= $row["user_email"];
         $tempNum++;
 }

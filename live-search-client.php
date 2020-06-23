@@ -4,7 +4,7 @@ require_once 'conn.php';
 $data = $_GET['client_id'];
 $data_decoded = json_decode($data);
 $param_contact_name = $data . '%';
-$stmt = $conn->prepare("SELECT DISTINCT client_id FROM clients WHERE client_id LIKE ?");
+$stmt = $conn2->prepare("SELECT DISTINCT client_id FROM clients WHERE client_id LIKE ?");
 $stmt->bind_param('s', $param_contact_name);
 $stmt->execute();
 $result = $stmt->get_result();

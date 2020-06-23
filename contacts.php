@@ -139,7 +139,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     <?php
       $sql = "SELECT * FROM users ORDER BY user_surname ASC";
       $i=0;
-      if ($result=mysqli_query($conn,$sql)){
+      if ($result=mysqli_query($conn2,$sql)){
         if(mysqli_num_rows($result)!==0) {
         while ($row = mysqli_fetch_array($result)){
           echo "<br><li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email']  . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
@@ -164,7 +164,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
       <?php
         $sql = "SELECT * FROM clients ORDER BY client_name ASC";
         $i=0;
-        if ($result=mysqli_query($conn,$sql)){
+        if ($result=mysqli_query($conn2,$sql)){
           if(mysqli_num_rows($result)!==0) {
           while ($row = mysqli_fetch_array($result)){
             echo "<li> " . $row['client_name'] ." " . $row['client_id'];

@@ -33,8 +33,8 @@
 <?php
 require_once 'conn.php';
 
-$query = "SELECT id FROM users";
-$result = mysqli_query($conn, $query);
+$sql = "SELECT id FROM users";
+$result = mysqli_query($conn, $sql);
 
 if(empty($result)) {
                 $query = "CREATE TABLE users (
@@ -51,9 +51,9 @@ if(empty($result)) {
 
 
 $sql = "SELECT id FROM clients";
-$result2 = mysqli_query($conn, $sql);
+$result = mysqli_query($conn, $sql);
 
-if(empty($result2)) {
+if(empty($result)) {
   $query = "CREATE TABLE clients (
             id MEDIUMINT NOT NULL AUTO_INCREMENT,
             client_id varchar(255) NOT NULL UNIQUE,
@@ -61,7 +61,21 @@ if(empty($result2)) {
             client_contacts_associated varchar(500),
             PRIMARY KEY (id)
             )";
-  $result2 = mysqli_query($conn, $query);
+  $result = mysqli_query($conn, $query);
+}
+
+
+$sql = "SELECT id FROM connections";
+$result = mysqli_query($conn, $sql);
+
+if(empty($result)) {
+  $query = "CREATE TABLE connections (
+            id MEDIUMINT NOT NULL AUTO_INCREMENT,
+            client_id varchar(255) NOT NULL,
+            contact_email varchar(255) NOT NULL,
+            PRIMARY KEY (id)
+            )";
+  $result = mysqli_query($conn, $query);
 }
 
 

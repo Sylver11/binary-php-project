@@ -95,44 +95,107 @@ if (!empty($_POST['client_name'])){
     <h4>List of all clients:</h4>
     <ul>
     <?php
-    $sql = "SELECT * FROM clients ORDER BY client_name ASC";
-    $i=0;
-    if ($result=mysqli_query($conn,$sql)){
-      if(mysqli_num_rows($result)!==0) {
-        while ($row = mysqli_fetch_array($result)){
-          echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
-          if($row['client_contacts_associated'] == '') { echo "<li> No contacts linked </li></ul></li>"; }
-          else{$array = explode(', ', $row['client_contacts_associated']);
-            foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id=" . $row   ['client_id']  . "&user_email=" . $value . "\";'>Remove link</button>"; }
-          echo "</ul>";}
-          echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
-          echo "<input type='text' class= 'search'>";
-          echo "<button class='btn btn-success' type='submit'>Link</button>";
-          echo "</form>";
+      $stmt = $conn->prepare("SELECT * FROM clients ORDER BY client_name ASC");
+      $stmt->execute();
+      $clients = $stmt->fetchAll(PDO::FETCH_UNIQUE);
+      $ids  = array_keys($clients);
+      $client_id = [];
+      foreach ($clients as $value){
+        array_push($client_id, $value['client_id']);
+      }
+      $in   = str_repeat('?,', count($ids) - 1) . '?';
+      $stmt = $conn->prepare("SELECT client_id, contact_email FROM connections WHERE client_id IN ($in)");
+      $stmt->execute($client_id);
+      $contacts_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
+      foreach($clients as $id => $row) {
+        foreach($contacts_linked as $key => $rows){
+          if ($row['client_id'] == $key){
+            $row['contact_email'] = $rows;
+          }
         }
-    $i++;
-      }else{
-        echo "No client(s) found.";
-      }   
-    } ?>
+          $clients[$id] = $row;
+          echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
+          if($row['contact_email']){
+            foreach($row['contact_email'] as $value){
+              echo "<li> " . $value['contact_email'] . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id="  .$row   ['client_id']  . "&user_email=" . $value['contact_email'] . "\";'>Remove link</button>";
+            }
+            echo "</ul>";
+          }
+          else{
+          echo "</ul>";
+          }
+                  echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
+                  echo "<input type='text' class= 'search'>";
+                  echo "<button class='btn btn-success' type='submit'>Link</button>";
+                  echo "</form>";
+      }
+
+
+      //  $i=0;
+      //  if ($result=mysqli_query($conn,$sql)){
+      //    if(mysqli_num_rows($result)!==0) {
+      //      while ($row = mysqli_fetch_array($result)){
+      //        echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
+      //        if($row['client_contacts_associated'] == '') { echo "<li> No contacts linked </li></ul></li>"; }
+      //        else{$array = explode(', ', $row['client_contacts_associated']);
+      //          foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id=" . $row   ['client_id']  . "&user_email=" . $value . "\";'>Remove link</button>"; }
+      //        echo "</ul>";}
+      //        echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
+      //        echo "<input type='text' class= 'search'>";
+      //        echo "<button class='btn btn-success' type='submit'>Link</button>";
+      //        echo "</form>";
+      //      }
+      //  $i++;
+      //    }else{
+      //      echo "No client(s) found.";
+      //    }   
+      //  } 
+    // $sql = "SELECT * FROM clients ORDER BY client_name ASC";
+    // $i=0;
+    // if ($result=mysqli_query($conn,$sql)){
+    //   if(mysqli_num_rows($result)!==0) {
+    //     while ($row = mysqli_fetch_array($result)){
+    //       echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
+    //       if($row['client_contacts_associated'] == '') { echo "<li> No contacts linked </li></ul></li>"; }
+    //       else{$array = explode(', ', $row['client_contacts_associated']);
+    //         foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id=" . $row   ['client_id']  . "&user_email=" . $value . "\";'>Remove link</button>"; }
+    //       echo "</ul>";}
+    //       echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
+    //       echo "<input type='text' class= 'search'>";
+    //       echo "<button class='btn btn-success' type='submit'>Link</button>";
+    //       echo "</form>";
+    //     }
+    // $i++;
+    //   }else{
+    //     echo "No client(s) found.";
+    //   }   
+    // } 
+    ?>
     </ul>
     <br><br>
     <h4>List of all contacts:</h4>
     <ul>
     <?php
+      $stmt = $conn->prepare("SELECT * FROM users ORDER BY user_surname ASC");
+      $stmt->execute();
+      $result = $stmt->fetchAll(PDO::FETCH_UNIQUE);
       $sql = "SELECT * FROM users ORDER BY user_surname ASC";
       $i=0;
-      if ($result=mysqli_query($conn,$sql)){
-        if(mysqli_num_rows($result)!==0) {
-          while ($row = mysqli_fetch_array($result)){
-            echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'] . "<ul>";
+      foreach ($result as $row){
+      // if ($result=mysqli_query($conn,$sql)){
+        // if(mysqli_num_rows($result)!==0) {
+          // print_r($value);
+ 
+    
+             echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'] . "<ul>";
             if($row['user_clients_associated'] == '') { echo "<li> No clients linked </li></ul></li>"; }
             else{echo "<li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
-        $i++;  
-      } }else{
-        echo "No contact(s) found.";
-      }    
     }
+      // } 
+    // }else{
+    //     echo "No contact(s) found.";
+    //   }    
+    // }
     ?>
     </ul>
     <br>
@@ -258,12 +321,15 @@ $( document ).ready(function() {
             var url = "live_search.php";
             var a, b, i, val = this.value;
             var name = this.value
+            // console.log("this is running")
+            // console.log(name)
                 $.ajax({
                 type: "GET",
                 url: url,
                 data: {user_email: name}, 
                 dataType: 'json',
                 success: function (returnData) {
+                  console.log("success is running")
                     if (returnData.length <= 5){
                       var names = [], range = returnData.length;
                     }
