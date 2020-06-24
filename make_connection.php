@@ -6,8 +6,11 @@ $contact_email = $_GET['user_email'];
 
 
 
-$stmt = $conn2->prepare("INSERT INTO connections (client_id, contact_email) VALUES (?, ?)");
-$stmt->bind_param('ss', $client_id, $contact_email);
+$stmt = $conn->prepare("INSERT INTO connections (client_id, contact_email) VALUES (?, ?)");
+// $stmt = $conn->prepare($sql);
+$stmt->bindParam(1, $client_id, PDO::PARAM_STR);
+$stmt->bindParam(2, $contact_email, PDO::PARAM_STR);
+// $stmt->bind_param('ss', $client_id, $contact_email);
 $stmt->execute();
 // $result = $stmt->get_result();
 // $tempNum=0;

@@ -29,9 +29,8 @@ if (!empty($_POST['client_name'])){
     }
   }
 }
-
-
 ?> 
+
 <html>
  <head>
   <title>Clients</title>
@@ -83,24 +82,29 @@ if (!empty($_POST['client_name'])){
     <h4>List of all clients:</h4>
     <ul>
     <?php
+
+    ////////old solution. Check contacts.php for improved eager loading script////
+
       $stmt = $conn->prepare("SELECT * FROM clients ORDER BY client_name ASC");
       $stmt->execute();
       $clients = $stmt->fetchAll(PDO::FETCH_UNIQUE);
-      $ids  = array_keys($clients);
-      $client_id = [];
-      foreach ($clients as $value){
-        array_push($client_id, $value['client_id']);
-      }
-      $in   = str_repeat('?,', count($ids) - 1) . '?';
-      $stmt = $conn->prepare("SELECT client_id, contact_email FROM connections WHERE client_id IN ($in)");
-      $stmt->execute($client_id);
-      $contacts_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
-      foreach($clients as $id => $row) {
-        foreach($contacts_linked as $key => $rows){
-          if ($row['client_id'] == $key){
-            $row['contact_email'] = $rows;
-          }
+      if(!empty($clients)){
+        $ids  = array_keys($clients);
+        $client_id = [];
+        foreach ($clients as $value){
+          array_push($client_id, $value['client_id']);
         }
+        $in   = str_repeat('?,', count($ids) - 1) . '?';
+        $stmt = $conn->prepare("SELECT client_id, contact_email FROM connections WHERE client_id IN ($in)");
+        $stmt->execute($client_id);
+        $contacts_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
+        
+        foreach($clients as $id => $row) {
+          foreach($contacts_linked as $key => $rows){
+            if ($row['client_id'] == $key){
+              $row['contact_email'] = $rows;
+            }
+          }
           $clients[$id] = $row;
           echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
           if(isset($row['contact_email'])){
@@ -117,6 +121,11 @@ if (!empty($_POST['client_name'])){
                   echo "<button class='btn btn-success' type='submit'>Link</button>";
                   echo "</form>";
       }
+    }
+    else{
+      echo "No client(s) found.";
+
+    }
  
     ?>
     </ul>
@@ -124,19 +133,30 @@ if (!empty($_POST['client_name'])){
     <h4>List of all contacts:</h4>
     <ul>
     <?php
-      $stmt = $conn->prepare("SELECT * FROM users ORDER BY user_surname ASC");
-      $stmt->execute();
-      $result = $stmt->fetchAll(PDO::FETCH_UNIQUE);
-      if(isset($result)){
-        foreach ($result as $row){
-             echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'] . "<ul>";
-            if($row['user_clients_associated'] == '') { echo "<li> No clients linked </li></ul></li>"; }
-            else{echo "<li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
+    $stmt = $conn->prepare("SELECT * FROM users ORDER BY user_surname ASC");
+    $stmt->execute();
+    $users = $stmt->fetchAll(PDO::FETCH_UNIQUE);
+    if(!empty($users)){
+      $emails = array_column($users, 'user_email');
+      $in   = str_repeat('?,', count($emails) - 1) . '?';
+      $stmt = $conn->prepare("SELECT contact_email, client_id FROM connections WHERE contact_email IN ($in)");
+      $stmt->execute($emails);
+      $clients_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
+      foreach ($users as $row){
+        $client = $clients_linked[$row['user_email']] ?? null;
+        echo "<li> " . $row['user_surname'] . " " . $row['user_name']  . " " . $row['user_email'] . "<ul>";
+        if (is_array($client)){
+          foreach($client as $item){
+            echo "<li> " . $item['client_id'] . "</li>";
+          }
         }
-      }else{
-        echo "No contact(s) found.";
-      }    
+        echo "</ul></li>";
+      }
+    }else{
+      echo "No contact(s) found.";
+    }
     ?>
+
     </ul>
     <br>
     <br>
@@ -212,8 +232,8 @@ $( document ).ready(function() {
             type: 'post',
             url: "client_id.php", 
             success: function(data) {
-             if(data !== 'null'){
-                var obj = JSON.parse(data);
+              var obj = JSON.parse(data);
+              if(obj["MAX(ID)"] !== null){
                 var highest_id = parseInt(obj["MAX(ID)"]) + 1;
                 if (highest_id < 999){
                   var highest_id_string_final = ("00" + highest_id).slice(-3);
@@ -223,7 +243,7 @@ $( document ).ready(function() {
                 }
               }
               else{
-                var highest_id_string_final = '001'
+                $("#client_id").val(final_id + '001')
               }
             },
             complete: function() { 
@@ -265,8 +285,6 @@ $( document ).ready(function() {
             var url = "live_search.php";
             var a, b, i, val = this.value;
             var name = this.value
-            // console.log("this is running")
-            // console.log(name)
                 $.ajax({
                 type: "GET",
                 url: url,

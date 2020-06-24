@@ -14,47 +14,36 @@ $user_name = $user_surname = $user_email = "";
 $user_name_err = $user_surname_err = $user_email_err = "";
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
- 
   if(empty(trim($_POST["user_email"]))){
     $username_err = "Please enter a email.";
   } else{
+    $param_user_email = trim($_POST["user_email"]);
     $sql = "SELECT id FROM users WHERE user_email = ?";
-    
-    if($stmt = mysqli_prepare($conn, $sql)){
-
-        mysqli_stmt_bind_param($stmt, "s", $param_user_email);
-
-        $param_user_email = trim($_POST["user_email"]);
-
-        if(mysqli_stmt_execute($stmt)){
-
-            mysqli_stmt_store_result($stmt);
-            
-            if(mysqli_stmt_num_rows($stmt) == 1){
-                $user_email_err = "This email is already taken.";
-            } else{
-                if (!filter_var(trim($_POST["user_email"]), FILTER_VALIDATE_EMAIL)) {
-                    $user_email_err = "Invalid email format";
-                }
-                else{
-                    $user_email = trim($_POST["user_email"]);
-                }
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(1, $param_user_email, PDO::PARAM_STR);
+    if($stmt->execute()){
+        if($stmt->rowCount() > 0){
+            $user_email_err = "This email is already taken.";
+        } 
+        else{
+            if (!filter_var(trim($_POST["user_email"]), FILTER_VALIDATE_EMAIL)) {
+              $user_email_err = "Invalid email format";
             }
-        } else{
-            echo "Oops! Something went wrong. Please try again later.";
+            else{
+              $user_email = trim($_POST["user_email"]);
+            }
         }
-
-        mysqli_stmt_close($stmt);
-      }
+    }
+    else{
+      echo "Oops! Something went wrong. Please try again later.";
+    }
   }
-
 
   if(empty(trim($_POST["user_name"]))){
     $user_name_err = "Please enter your first name.";
    } else{
       $user_name = trim($_POST["user_name"]);
     }
-
 
   if(empty(trim($_POST["user_surname"]))){
       $user_surname_err = "Please enter your surname.";
@@ -63,29 +52,19 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
       }
 
   if(empty($user_email_err) && empty($user_name_err) && empty($user_surname_err)){
-        
     $sql = "INSERT INTO users (user_name, user_surname, user_email) VALUES (?, ?, ?)";
-   
-    if($stmt = mysqli_prepare($conn, $sql)){
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(1, $user_name, PDO::PARAM_STR);
+    $stmt->bindParam(2, $user_surname, PDO::PARAM_STR);
+    $stmt->bindParam(3, $user_email, PDO::PARAM_STR);
 
-      mysqli_stmt_bind_param($stmt, "sss", $param_user_name, $param_user_surname, $param_user_email);
-
-      $param_user_name = $user_name;
-      $param_user_surname = $user_surname;
-      $param_user_email = $user_email;
-      
-
-      if(mysqli_stmt_execute($stmt)){
-          header("location: contacts.php");
-      } else{
-          echo "Something went wrong. Please try again later.";
+    if($stmt->execute()){
+        header("location: contacts.php");
+    } else{
+        echo "Something went wrong. Please try again later.";
       }
-
-      mysqli_stmt_close($stmt);
     }
   }
-// mysqli_close($conn);
-}
 
 ?> 
 
@@ -137,46 +116,67 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     <h4>List of all contacts:</h4>
     <ul>
     <?php
-      $sql = "SELECT * FROM users ORDER BY user_surname ASC";
-      $i=0;
-      if ($result=mysqli_query($conn2,$sql)){
-        if(mysqli_num_rows($result)!==0) {
-        while ($row = mysqli_fetch_array($result)){
-          echo "<br><li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email']  . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
-          if($row['user_clients_associated'] == '') { echo "<li> No clients linked </li></ul></li>"; }
-          else{
-            $array = explode(', ', $row['user_clients_associated']);
-            foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger'  type='delete' onclick='location.href=\"unlink.php?user_email=" . $row['user_email'] . "&client_id=" . $value . "\";'>Remove link</button></ul>"; }}
-            echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
-            echo "<input type='text' class= 'search'>";
-            echo "<button class='btn btn-success' type='submit'>Link</button>";
-            echo "</form>";
-      $i++;  
-      } }
-      else{
-        echo "No contact(s) found.";
-      } 
-    }  
+
+    $stmt = $conn->prepare("SELECT * FROM users ORDER BY user_surname ASC");
+    $stmt->execute();
+    $users = $stmt->fetchAll(PDO::FETCH_UNIQUE);
+    if(!empty($users)){
+    $emails = array_column($users, 'user_email');
+    $in   = str_repeat('?,', count($emails) - 1) . '?';
+    $stmt = $conn->prepare("SELECT contact_email, client_id FROM connections WHERE contact_email IN ($in)");
+    $stmt->execute($emails);
+    $clients_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
+    
+      foreach($users as $id => $row) {
+        $client = $clients_linked[$row['user_email']] ?? null;
+        echo "<br><li><p style='font-size:20px'> " .  $row['user_surname'] . " " . $row['user_name'] . " " . $row['user_email'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link client</button></span></p><ul>";
+        if (is_array($client)){
+          foreach($client as $item){
+            echo "<li> " . $item['client_id'] . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id="  .$row   ['user_email']  . "&user_email=" . $item['client_id'] . "\";'>Remove link</button>";
+          }
+          echo "</ul>";
+        }
+        else{
+          echo "</ul>";
+        }
+        echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
+        echo "<input type='text' class= 'search'>";
+        echo "<button class='btn btn-success' type='submit'>Link</button>";
+        echo "</form>";
+      }
+    }else{
+      echo "No contact(s) found.";
+    }
     ?>
+
     </ul>
     <h4>List of all clients:</h4>
       <ul>
       <?php
-        $sql = "SELECT * FROM clients ORDER BY client_name ASC";
-        $i=0;
-        if ($result=mysqli_query($conn2,$sql)){
-          if(mysqli_num_rows($result)!==0) {
-          while ($row = mysqli_fetch_array($result)){
-            echo "<li> " . $row['client_name'] ." " . $row['client_id'];
-            if($row['client_contacts_associated'] == '') { echo "<ul><li> No contacts linked </li></ul></li>"; }
-            else{echo "<ul><li> " . $row['client_contacts_associated'] . "</li></ul></li>"; }
-        $i++;  
-        } }
-        else{
-          echo "No client(s) found.";
-        } 
-      }   
-    ?>
+        $stmt = $conn->prepare("SELECT * FROM clients ORDER BY client_name ASC");
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_UNIQUE);
+        if(!empty($result)){
+        $client_ids = array_column($result, 'client_id');
+        $in   = str_repeat('?,', count($client_ids) - 1) . '?';
+        $stmt = $conn->prepare("SELECT client_id, contact_email FROM connections WHERE client_id IN ($in)");
+        $stmt->execute($client_ids);
+        $contacts_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
+        
+         foreach ($result as $row){
+          $contact = $contacts_linked[$row['client_id']] ?? null;
+          echo "<li> " . $row['client_name'] ." " . $row['client_id'] . "<ul>";
+          if (is_array($contact)){
+            foreach($contact as $item){
+              echo "<li> " . $item['contact_email'] . "</li>";
+            }
+          }
+          echo "</ul></li>";
+         }
+       }else{
+         echo "No client(s) found.";
+       }   
+      ?>
     </ul>
   </div>
 </body>
