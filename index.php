@@ -33,51 +33,27 @@
 <?php
 require_once 'conn.php';
 
-$sql = "SELECT id FROM users";
-$result = mysqli_query($conn, $sql);
 
-if(empty($result)) {
-                $query = "CREATE TABLE users (
-                          id MEDIUMINT AUTO_INCREMENT,
-                          user_email varchar(255) NOT NULL UNIQUE,
-                          user_name varchar(255) NOT NULL,
-                          user_surname varchar(255) NOT NULL,
-                          user_clients_associated varchar(500),
-                          PRIMARY KEY (id)
-                          )";
-                $result = mysqli_query($conn, $query);
-}
+$sql_create_tables = "CREATE TABLE IF NOT EXISTS clients (
+              id MEDIUMINT NOT NULL AUTO_INCREMENT,
+              client_id varchar(255) NOT NULL UNIQUE,
+              client_name varchar(255) NOT NULL,
+              client_contacts_associated varchar(500),
+              PRIMARY KEY (id));
+             CREATE TABLE IF NOT EXISTS users (
+              id MEDIUMINT AUTO_INCREMENT,
+              user_email varchar(255) NOT NULL UNIQUE,
+              user_name varchar(255) NOT NULL,
+              user_surname varchar(255) NOT NULL,
+              user_clients_associated varchar(500),
+              PRIMARY KEY (id));
+            CREATE TABLE IF NOT EXISTS connections (
+              id MEDIUMINT NOT NULL AUTO_INCREMENT,
+              client_id varchar(255) NOT NULL,
+              contact_email varchar(255) NOT NULL,
+              PRIMARY KEY (id));";
 
-
-
-$sql = "SELECT id FROM clients";
-$result = mysqli_query($conn, $sql);
-
-if(empty($result)) {
-  $query = "CREATE TABLE clients (
-            id MEDIUMINT NOT NULL AUTO_INCREMENT,
-            client_id varchar(255) NOT NULL UNIQUE,
-            client_name varchar(255) NOT NULL,
-            client_contacts_associated varchar(500),
-            PRIMARY KEY (id)
-            )";
-  $result = mysqli_query($conn, $query);
-}
-
-
-$sql = "SELECT id FROM connections";
-$result = mysqli_query($conn, $sql);
-
-if(empty($result)) {
-  $query = "CREATE TABLE connections (
-            id MEDIUMINT NOT NULL AUTO_INCREMENT,
-            client_id varchar(255) NOT NULL,
-            contact_email varchar(255) NOT NULL,
-            PRIMARY KEY (id)
-            )";
-  $result = mysqli_query($conn, $query);
-}
-
+$conn->exec($sql_create_tables);
 
 ?>
 
