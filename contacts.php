@@ -216,7 +216,7 @@ $( document ).ready(function() {
             e.preventDefault();
             var currentFocus;
             var input_element = this;
-            var url = "live-search-client.php";
+            var url = "live_search.php";
             var a, b, i, val = this.value;
             var name = this.value
                 $.ajax({
@@ -232,7 +232,7 @@ $( document ).ready(function() {
                      var names = [], range = 5
                     }
                     for (i = 0; i < range; i++) {
-                        names[i] = returnData[i]
+                        names[i] = returnData[i]['client_id']
                     }
                     closeAllLists();
                     if (!val) { return false;}

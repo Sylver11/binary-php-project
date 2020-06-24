@@ -291,7 +291,6 @@ $( document ).ready(function() {
                 data: {user_email: name}, 
                 dataType: 'json',
                 success: function (returnData) {
-                  console.log("success is running")
                     if (returnData.length <= 5){
                       var names = [], range = returnData.length;
                     }
@@ -299,7 +298,7 @@ $( document ).ready(function() {
                      var names = [], range = 5
                     }
                     for (i = 0; i < range; i++) {
-                        names[i] = returnData[i]
+                        names[i] = returnData[i]['user_email']
                     }
                     closeAllLists();
                     if (!val) { return false;}

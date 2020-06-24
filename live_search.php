@@ -1,21 +1,19 @@
 <?php
+
 require_once 'conn.php';
 
-$data = $_GET['user_email'] ;
-$data_decoded = json_decode($data);
-$param_contact_name = $data . '%';
-$stmt = $conn->prepare("SELECT DISTINCT user_email FROM users WHERE user_email LIKE ?");
-// $stmt->bind_param('s', $param_contact_name);
-$stmt->execute($param_contact_name);
-$result = $stmt->fetch();
-// print_r($result);
-$tempNum=0;
-$arr = array();
-while ($row = $result) {
-        $arr[$tempNum]= $row["user_email"];
-        $tempNum++;
+if(isset($_GET['user_email'])){
+        $param_user_email = $_GET['user_email'] . '%';
+        $stmt = $conn->prepare("SELECT DISTINCT user_email FROM users WHERE user_email LIKE ?");
+        $stmt->bindParam(1, $param_user_email, PDO::PARAM_STR);
 }
-echo json_encode($arr);
-exit();
+else{
+        $param_client_id = $_GET['client_id'] . '%';
+        $stmt = $conn->prepare("SELECT DISTINCT client_id FROM clients WHERE client_id LIKE ?");
+        $stmt->bindParam(1, $param_client_id, PDO::PARAM_STR);
+}
+$stmt->execute();
+$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+echo json_encode($result);
 
 ?>
