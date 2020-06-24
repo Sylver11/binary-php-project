@@ -1,12 +1,7 @@
 <?php
 require_once "conn.php";
-$sql="SELECT MAX(ID) FROM clients";
-$i=0;
-if ($result=mysqli_query($conn,$sql)){
-  while ($row = mysqli_fetch_array($result)){
-    $highestID =  $row['MAX(ID)'];
-$i++;  
-} 
-echo json_encode($highestID);
-}
+$stmt = $conn->prepare("SELECT MAX(ID) FROM clients"); 
+$stmt->execute(); 
+$row = $stmt->fetch();
+echo json_encode($row);
 ?>

@@ -6,42 +6,30 @@ $client_name = $client_id = "";
 $client_name_err = $client_id_err = "";
 
 if (!empty($_POST['client_name'])){
-
   if(empty(trim($_POST["client_name"]))){
     $client_name_err = "Please enter a name";
    } else{
       $client_name = trim($_POST["client_name"]);
     }
-
   if(empty(trim($_POST["client_id"]))){
       $client_id_err = "Please enter an ID.";
     } else{
         $client_id = trim($_POST["client_id"]);
       }
-
   if(empty($client_id_err) && empty($client_name_err)){
         
     $sql = "INSERT INTO clients (client_name, client_id) VALUES (?, ?)";
-   
-    if($stmt = mysqli_prepare($conn, $sql)){
-
-      mysqli_stmt_bind_param($stmt, "ss", $param_client_name, $param_client_id);
-
-      $param_client_name = $client_name;
-      $param_client_id = $client_id;
-      
-
-      if(mysqli_stmt_execute($stmt)){
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(1, $client_name, PDO::PARAM_STR);
+    $stmt->bindParam(2, $client_id, PDO::PARAM_STR);
+    if($stmt->execute()){
           // header("location: clients.php");
-      } else{
+    } else{
           echo "Something went wrong. Please try again later.";
-      }
-
-      mysqli_stmt_close($stmt);
     }
   }
-// mysqli_close($conn);
 }
+
 
 ?> 
 <html>
@@ -115,7 +103,7 @@ if (!empty($_POST['client_name'])){
         }
           $clients[$id] = $row;
           echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
-          if($row['contact_email']){
+          if(isset($row['contact_email'])){
             foreach($row['contact_email'] as $value){
               echo "<li> " . $value['contact_email'] . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id="  .$row   ['client_id']  . "&user_email=" . $value['contact_email'] . "\";'>Remove link</button>";
             }
@@ -129,47 +117,7 @@ if (!empty($_POST['client_name'])){
                   echo "<button class='btn btn-success' type='submit'>Link</button>";
                   echo "</form>";
       }
-
-
-      //  $i=0;
-      //  if ($result=mysqli_query($conn,$sql)){
-      //    if(mysqli_num_rows($result)!==0) {
-      //      while ($row = mysqli_fetch_array($result)){
-      //        echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
-      //        if($row['client_contacts_associated'] == '') { echo "<li> No contacts linked </li></ul></li>"; }
-      //        else{$array = explode(', ', $row['client_contacts_associated']);
-      //          foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id=" . $row   ['client_id']  . "&user_email=" . $value . "\";'>Remove link</button>"; }
-      //        echo "</ul>";}
-      //        echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
-      //        echo "<input type='text' class= 'search'>";
-      //        echo "<button class='btn btn-success' type='submit'>Link</button>";
-      //        echo "</form>";
-      //      }
-      //  $i++;
-      //    }else{
-      //      echo "No client(s) found.";
-      //    }   
-      //  } 
-    // $sql = "SELECT * FROM clients ORDER BY client_name ASC";
-    // $i=0;
-    // if ($result=mysqli_query($conn,$sql)){
-    //   if(mysqli_num_rows($result)!==0) {
-    //     while ($row = mysqli_fetch_array($result)){
-    //       echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
-    //       if($row['client_contacts_associated'] == '') { echo "<li> No contacts linked </li></ul></li>"; }
-    //       else{$array = explode(', ', $row['client_contacts_associated']);
-    //         foreach($array as $value) {echo "<li> " . $value . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id=" . $row   ['client_id']  . "&user_email=" . $value . "\";'>Remove link</button>"; }
-    //       echo "</ul>";}
-    //       echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
-    //       echo "<input type='text' class= 'search'>";
-    //       echo "<button class='btn btn-success' type='submit'>Link</button>";
-    //       echo "</form>";
-    //     }
-    // $i++;
-    //   }else{
-    //     echo "No client(s) found.";
-    //   }   
-    // } 
+ 
     ?>
     </ul>
     <br><br>
@@ -179,23 +127,15 @@ if (!empty($_POST['client_name'])){
       $stmt = $conn->prepare("SELECT * FROM users ORDER BY user_surname ASC");
       $stmt->execute();
       $result = $stmt->fetchAll(PDO::FETCH_UNIQUE);
-      $sql = "SELECT * FROM users ORDER BY user_surname ASC";
-      $i=0;
-      foreach ($result as $row){
-      // if ($result=mysqli_query($conn,$sql)){
-        // if(mysqli_num_rows($result)!==0) {
-          // print_r($value);
- 
-    
+      if(isset($result)){
+        foreach ($result as $row){
              echo "<li> " . $row['user_name'] ." " . $row['user_surname'] . " " . $row['user_email'] . "<ul>";
             if($row['user_clients_associated'] == '') { echo "<li> No clients linked </li></ul></li>"; }
             else{echo "<li> " . $row['user_clients_associated'] . "</li></ul></li>"; }
-    }
-      // } 
-    // }else{
-    //     echo "No contact(s) found.";
-    //   }    
-    // }
+        }
+      }else{
+        echo "No contact(s) found.";
+      }    
     ?>
     </ul>
     <br>
@@ -274,13 +214,17 @@ $( document ).ready(function() {
             success: function(data) {
              if(data !== 'null'){
                 var obj = JSON.parse(data);
-                var highest_id = parseInt(obj) + 1;
-                var highest_id_string_final = ("00" + highest_id).slice(-3);
+                var highest_id = parseInt(obj["MAX(ID)"]) + 1;
+                if (highest_id < 999){
+                  var highest_id_string_final = ("00" + highest_id).slice(-3);
+                  $("#client_id").val(final_id + highest_id_string_final)
+                }else{
+                  $("#client_id").val(final_id + highest_id)
+                }
               }
               else{
                 var highest_id_string_final = '001'
               }
-              $("#client_id").val(final_id + highest_id_string_final )
             },
             complete: function() { 
               $(".form_add_client").off('submit');
