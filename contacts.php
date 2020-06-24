@@ -132,7 +132,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         echo "<br><li><p style='font-size:20px'> " .  $row['user_surname'] . " " . $row['user_name'] . " " . $row['user_email'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link client</button></span></p><ul>";
         if (is_array($client)){
           foreach($client as $item){
-            echo "<li> " . $item['client_id'] . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id="  .$row   ['user_email']  . "&user_email=" . $item['client_id'] . "\";'>Remove link</button>";
+            echo "<li> " . $item['client_id'] . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?user_email="  .     $row['user_email']  . "&client_id=" . $item['client_id'] . "\";'>Remove link</button>";
           }
           echo "</ul>";
         }
@@ -204,7 +204,13 @@ $( document ).ready(function() {
             url: "make_connection.php", 
             data: {client_id: client_id, user_email: user_email[0]}, 
             dataType: 'json',
-            success: function() { 
+            success: function(data) { 
+              if(data == 'success'){
+                alert(data);
+              }
+              else{
+                alert(data);
+              }
               $(object).find('input').val('');
             }
        });
