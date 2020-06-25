@@ -9,28 +9,29 @@
 
 <?php 
 require_once 'conn.php';
+require 'eager-loading.php';
 
-$user_name = $user_surname = $user_email = "";
-$user_name_err = $user_surname_err = $user_email_err = "";
+$contact_name = $contact_surname = $contact_email = "";
+$contact_name_err = $contact_surname_err = $contact_email_err = "";
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
-  if(empty(trim($_POST["user_email"]))){
-    $username_err = "Please enter a email.";
+  if(empty(trim($_POST["contact_email"]))){
+    $contact_email_err = "Please enter a email.";
   } else{
-    $param_user_email = trim($_POST["user_email"]);
-    $sql = "SELECT id FROM users WHERE user_email = ?";
+    $param_contact_email = trim($_POST["contact_email"]);
+    $sql = "SELECT id FROM contacts WHERE contact_email = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bindParam(1, $param_user_email, PDO::PARAM_STR);
+    $stmt->bindParam(1, $param_contact_email, PDO::PARAM_STR);
     if($stmt->execute()){
         if($stmt->rowCount() > 0){
-            $user_email_err = "This email is already taken.";
+            $contact_email_err = "This email is already taken.";
         } 
         else{
-            if (!filter_var(trim($_POST["user_email"]), FILTER_VALIDATE_EMAIL)) {
-              $user_email_err = "Invalid email format";
+            if (!filter_var(trim($_POST["contact_email"]), FILTER_VALIDATE_EMAIL)) {
+              $contact_email_err = "Invalid email format";
             }
             else{
-              $user_email = trim($_POST["user_email"]);
+              $contact_email = trim($_POST["contact_email"]);
             }
         }
     }
@@ -39,24 +40,24 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     }
   }
 
-  if(empty(trim($_POST["user_name"]))){
-    $user_name_err = "Please enter your first name.";
+  if(empty(trim($_POST["contact_name"]))){
+    $contact_name_err = "Please enter your first name.";
    } else{
-      $user_name = trim($_POST["user_name"]);
+      $contact_name = trim($_POST["contact_name"]);
     }
 
-  if(empty(trim($_POST["user_surname"]))){
-      $user_surname_err = "Please enter your surname.";
+  if(empty(trim($_POST["contact_surname"]))){
+      $contact_surname_err = "Please enter your surname.";
     } else{
-        $user_surname = trim($_POST["user_surname"]);
+        $contact_surname = trim($_POST["contact_surname"]);
       }
 
-  if(empty($user_email_err) && empty($user_name_err) && empty($user_surname_err)){
-    $sql = "INSERT INTO users (user_name, user_surname, user_email) VALUES (?, ?, ?)";
+  if(empty($contact_email_err) && empty($contact_name_err) && empty($contact_surname_err)){
+    $sql = "INSERT INTO contacts (contact_name, contact_surname, contact_email) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bindParam(1, $user_name, PDO::PARAM_STR);
-    $stmt->bindParam(2, $user_surname, PDO::PARAM_STR);
-    $stmt->bindParam(3, $user_email, PDO::PARAM_STR);
+    $stmt->bindParam(1, $contact_name, PDO::PARAM_STR);
+    $stmt->bindParam(2, $contact_surname, PDO::PARAM_STR);
+    $stmt->bindParam(3, $contact_email, PDO::PARAM_STR);
 
     if($stmt->execute()){
         header("location: contacts.php");
@@ -92,20 +93,20 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         <h2>Add Contact</h2>
         <p>Please fill this form to add a contact.</p>
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-            <div class="form-group <?php echo (!empty($user_name_err)) ? 'has-error' : ''; ?>">
+            <div class="form-group <?php echo (!empty($contact_name_err)) ? 'has-error' : ''; ?>">
                 <label>Name</label>
-                <input type="text" name="user_name" class="form-control" value="<?php echo $user_name; ?>">
-                <span class="help-block"><?php echo $user_name_err; ?></span>
+                <input type="text" name="contact_name" class="form-control" value="<?php echo $contact_name; ?>">
+                <span class="help-block"><?php echo $contact_name_err; ?></span>
             </div>    
-            <div class="form-group <?php echo (!empty($user_surname_err)) ? 'has-error' : ''; ?>">
+            <div class="form-group <?php echo (!empty($contact_surname_err)) ? 'has-error' : ''; ?>">
                 <label>Surname</label>
-                <input type="text" name="user_surname" class="form-control" value="<?php echo $user_surname; ?>">
-                <span class="help-block"><?php echo $user_surname_err; ?></span>
+                <input type="text" name="contact_surname" class="form-control" value="<?php echo $contact_surname; ?>">
+                <span class="help-block"><?php echo $contact_surname_err; ?></span>
             </div>  
-            <div class="form-group <?php echo (!empty($user_email_err)) ? 'has-error' : ''; ?>">
+            <div class="form-group <?php echo (!empty($contact_email_err)) ? 'has-error' : ''; ?>">
                 <label>Email</label>
-                <input type="email" name="user_email" class="form-control" value="<?php echo $user_email; ?>">
-                <span class="help-block"><?php echo $user_email_err; ?></span>
+                <input type="email" name="contact_email" class="form-control" value="<?php echo $contact_email; ?>">
+                <span class="help-block"><?php echo $contact_email_err; ?></span>
             </div>
             <div class="form-group">
                 <input type="submit" class="btn btn-primary" value="Add Contact">
@@ -116,66 +117,16 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     <h4>List of all contacts:</h4>
     <ul>
     <?php
-
-    $stmt = $conn->prepare("SELECT * FROM users ORDER BY user_surname ASC");
-    $stmt->execute();
-    $users = $stmt->fetchAll(PDO::FETCH_UNIQUE);
-    if(!empty($users)){
-    $emails = array_column($users, 'user_email');
-    $in   = str_repeat('?,', count($emails) - 1) . '?';
-    $stmt = $conn->prepare("SELECT contact_email, client_id FROM connections WHERE contact_email IN ($in)");
-    $stmt->execute($emails);
-    $clients_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
-    
-      foreach($users as $id => $row) {
-        $client = $clients_linked[$row['user_email']] ?? null;
-        echo "<br><li><p style='font-size:20px'> " .  $row['user_surname'] . " " . $row['user_name'] . " " . $row['user_email'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link client</button></span></p><ul>";
-        if (is_array($client)){
-          foreach($client as $item){
-            echo "<li> " . $item['client_id'] . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?user_email="  .     $row['user_email']  . "&client_id=" . $item['client_id'] . "\";'>Remove link</button>";
-          }
-          echo "</ul>";
-        }
-        else{
-          echo "</ul>";
-        }
-        echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
-        echo "<input type='text' class= 'search'>";
-        echo "<button class='btn btn-success' type='submit'>Link</button>";
-        echo "</form>";
-      }
-    }else{
-      echo "No contact(s) found.";
-    }
+    $list = new Eager('contacts', 'contact_surname', 'connections', 'contact_email', 'contact_email', 'client_id', 'big', $db_username, $db_password);
+    echo $list->output();
     ?>
 
     </ul>
     <h4>List of all clients:</h4>
       <ul>
       <?php
-        $stmt = $conn->prepare("SELECT * FROM clients ORDER BY client_name ASC");
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_UNIQUE);
-        if(!empty($result)){
-        $client_ids = array_column($result, 'client_id');
-        $in   = str_repeat('?,', count($client_ids) - 1) . '?';
-        $stmt = $conn->prepare("SELECT client_id, contact_email FROM connections WHERE client_id IN ($in)");
-        $stmt->execute($client_ids);
-        $contacts_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
-        
-         foreach ($result as $row){
-          $contact = $contacts_linked[$row['client_id']] ?? null;
-          echo "<li> " . $row['client_name'] ." " . $row['client_id'] . "<ul>";
-          if (is_array($contact)){
-            foreach($contact as $item){
-              echo "<li> " . $item['contact_email'] . "</li>";
-            }
-          }
-          echo "</ul></li>";
-         }
-       }else{
-         echo "No client(s) found.";
-       }   
+      $small_list = new Eager('clients', 'client_name', 'connections', 'client_id', 'client_id', 'contact_email', 'small', $db_username, $db_password);
+      echo $small_list->output();
       ?>
     </ul>
   </div>
@@ -196,13 +147,13 @@ $( document ).ready(function() {
         e.preventDefault()
         var contact_string = $(this).prev('li').text()
         var re = /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/;
-        var user_email = re.exec(contact_string);
+        var contact_email = re.exec(contact_string);
         var object = this
         var client_id = this[0].value
         $.ajax({ 
             type: 'get',
             url: "make_connection.php", 
-            data: {client_id: client_id, user_email: user_email[0]}, 
+            data: {client_id: client_id, contact_email: contact_email[0]}, 
             dataType: 'json',
             success: function(data) { 
               if(data == 'success'){

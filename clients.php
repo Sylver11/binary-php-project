@@ -1,6 +1,7 @@
 <?php 
 
 require_once 'conn.php';
+require 'eager-loading.php';
 
 $client_name = $client_id = "";
 $client_name_err = $client_id_err = "";
@@ -23,7 +24,7 @@ if (!empty($_POST['client_name'])){
     $stmt->bindParam(1, $client_name, PDO::PARAM_STR);
     $stmt->bindParam(2, $client_id, PDO::PARAM_STR);
     if($stmt->execute()){
-          // header("location: clients.php");
+          header("location: clients.php");
     } else{
           echo "Something went wrong. Please try again later.";
     }
@@ -82,50 +83,9 @@ if (!empty($_POST['client_name'])){
     <h4>List of all clients:</h4>
     <ul>
     <?php
-
-    ////////old solution. Check contacts.php for improved eager loading script////
-
-      $stmt = $conn->prepare("SELECT * FROM clients ORDER BY client_name ASC");
-      $stmt->execute();
-      $clients = $stmt->fetchAll(PDO::FETCH_UNIQUE);
-      if(!empty($clients)){
-        $ids  = array_keys($clients);
-        $client_id = [];
-        foreach ($clients as $value){
-          array_push($client_id, $value['client_id']);
-        }
-        $in   = str_repeat('?,', count($ids) - 1) . '?';
-        $stmt = $conn->prepare("SELECT client_id, contact_email FROM connections WHERE client_id IN ($in)");
-        $stmt->execute($client_id);
-        $contacts_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
-        
-        foreach($clients as $id => $row) {
-          foreach($contacts_linked as $key => $rows){
-            if ($row['client_id'] == $key){
-              $row['contact_email'] = $rows;
-            }
-          }
-          $clients[$id] = $row;
-          echo "<br><li><p style='font-size:20px'> " .  $row['client_name'] ." " . $row['client_id'] . "&nbsp;&nbsp;&nbsp;<span><button class='btn btn-primary link_contact'>Link contact</button></span></p><ul>";
-          if(isset($row['contact_email'])){
-            foreach($row['contact_email'] as $value){
-              echo "<li> " . $value['contact_email'] . "</li><button class='btn btn-danger' type='delete' onclick='location.href=\"unlink.php?client_id="  .$row   ['client_id']  . "&user_email=" . $value['contact_email'] . "\";'>Remove link</button>";
-            }
-            echo "</ul>";
-          }
-          else{
-          echo "</ul>";
-          }
-                  echo " </li><form style='display: none;'class='search_form' autocomplete='off'>";
-                  echo "<input type='text' class= 'search'>";
-                  echo "<button class='btn btn-success' type='submit'>Link</button>";
-                  echo "</form>";
-      }
-    }
-    else{
-      echo "No client(s) found.";
-
-    }
+    
+    $list = new Eager('clients', 'client_name', 'connections', 'client_id', 'client_id', 'contact_email', 'big', $db_username, $db_password);
+    echo $list->output();
  
     ?>
     </ul>
@@ -133,28 +93,8 @@ if (!empty($_POST['client_name'])){
     <h4>List of all contacts:</h4>
     <ul>
     <?php
-    $stmt = $conn->prepare("SELECT * FROM users ORDER BY user_surname ASC");
-    $stmt->execute();
-    $users = $stmt->fetchAll(PDO::FETCH_UNIQUE);
-    if(!empty($users)){
-      $emails = array_column($users, 'user_email');
-      $in   = str_repeat('?,', count($emails) - 1) . '?';
-      $stmt = $conn->prepare("SELECT contact_email, client_id FROM connections WHERE contact_email IN ($in)");
-      $stmt->execute($emails);
-      $clients_linked = $stmt->fetchAll(PDO::FETCH_GROUP);
-      foreach ($users as $row){
-        $client = $clients_linked[$row['user_email']] ?? null;
-        echo "<li> " . $row['user_surname'] . " " . $row['user_name']  . " " . $row['user_email'] . "<ul>";
-        if (is_array($client)){
-          foreach($client as $item){
-            echo "<li> " . $item['client_id'] . "</li>";
-          }
-        }
-        echo "</ul></li>";
-      }
-    }else{
-      echo "No contact(s) found.";
-    }
+    $small_list = new Eager('contacts', 'contact_surname', 'connections', 'contact_email', 'contact_email', 'client_id', 'small', $db_username, $db_password);
+    echo $small_list->output();
     ?>
 
     </ul>
@@ -269,7 +209,13 @@ $( document ).ready(function() {
             url: "make_connection.php", 
             data: {client_id: client_id[0], user_email: user_email}, 
             dataType: 'json',
-            success: function() { 
+            success: function(data) { 
+              if(data == 'success'){
+                alert(data);
+              }
+              else{
+                alert(data);
+              }
               $(object).find('input').val('');
 
             }

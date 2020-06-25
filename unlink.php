@@ -28,7 +28,7 @@
 require_once "conn.php";
 
 $client_id = $_GET['client_id'];
-$user_email = $_GET['user_email'];
+$user_email = $_GET['contact_email'];
 $stmt = $conn->prepare( "DELETE FROM connections WHERE contact_email = :user_email AND client_id = :client_id" );
 $stmt->bindParam(':user_email', $user_email);        
 $stmt->bindParam(':client_id', $client_id);

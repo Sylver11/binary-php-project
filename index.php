@@ -40,12 +40,11 @@ $sql_create_tables = "CREATE TABLE IF NOT EXISTS clients (
               client_name varchar(255) NOT NULL,
               client_contacts_associated varchar(500),
               PRIMARY KEY (id));
-             CREATE TABLE IF NOT EXISTS users (
+             CREATE TABLE IF NOT EXISTS contacts (
               id MEDIUMINT AUTO_INCREMENT,
-              user_email varchar(255) NOT NULL UNIQUE,
-              user_name varchar(255) NOT NULL,
-              user_surname varchar(255) NOT NULL,
-              user_clients_associated varchar(500),
+              contact_email varchar(255) NOT NULL UNIQUE,
+              contact_name varchar(255) NOT NULL,
+              contact_surname varchar(255) NOT NULL,
               PRIMARY KEY (id));
             CREATE TABLE IF NOT EXISTS connections (
               id MEDIUMINT NOT NULL AUTO_INCREMENT,
